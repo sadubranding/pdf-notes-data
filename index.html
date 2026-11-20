@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>PDF Notes</title>
+<style>
+*{box-sizing:border-box;margin:0}
+body{font:14px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;background:#fff;color:#111;height:100vh;overflow:hidden}
+button{font:inherit;cursor:pointer;border:0;background:none;color:inherit}
+#app{display:flex;height:100%}
+#side{width:230px;border-right:1px solid #eee;padding:16px 12px;overflow:auto;background:#fff;flex:none}
+.logo{font-weight:700;font-size:17px;padding:4px 8px 14px}
+.nv{display:block;padding:9px 10px;border-radius:9px;cursor:pointer;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nv:hover{background:#f6f6f7}.nv.on{background:#f1f1f4;font-weight:600}
+.hd{font-size:12px;color:#888;margin:16px 10px 6px}
+#main{flex:1;overflow:auto;padding:18px 24px 90px}
+.top{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+#menu{display:none;font-size:22px}
+.top input{flex:1;min-width:140px;max-width:380px;padding:10px 12px;border:1px solid #e5e5ea;border-radius:10px;font:inherit}
+.b{padding:9px 14px;border:1px solid #e5e5ea;border-radius:10px;background:#fff}
+.b.p{background:#111;color:#fff;border-color:#111}
+h1{font-size:26px;font-weight:600;margin:6px 0 16px}
+h2{font-size:15px;font-weight:600;margin:20px 0 10px;color:#333}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.card{position:relative;border-radius:16px;padding:14px;min-height:96px;cursor:pointer;border:1px solid #eee;display:flex;flex-direction:column;justify-content:flex-end}
+.fc{min-height:110px;border:0}
+.card .t{font-weight:600;word-break:break-word}
+.card .s{font-size:12px;color:#777;margin-top:2px}
+.pc{padding:0;overflow:hidden;min-height:150px;justify-content:flex-start;background:#fff;box-shadow:0 1px 3px #0001}
+.pc .th{height:70px;display:flex;align-items:center;justify-content:center;font-size:26px;color:#fff;font-weight:700;letter-spacing:1px}
+.pc .in{padding:10px 12px}
+.dots{position:absolute;top:8px;right:8px;background:#fff;border-radius:99px;width:28px;height:28px;box-shadow:0 1px 3px #0002;z-index:2}
+.chk{position:absolute;top:8px;left:8px;width:22px;height:22px;border-radius:7px;border:2px solid #fff;background:#0003;z-index:2;color:#fff;font-size:13px;line-height:18px;text-align:center}
+.chk.on{background:#2563eb;border-color:#2563eb}
+.empty{color:#999;padding:30px 0}
+#sel{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:#111;color:#fff;border-radius:14px;padding:8px 10px;display:none;gap:4px;align-items:center;z-index:20;max-width:96vw;flex-wrap:wrap}
+#sel button{padding:7px 10px;border-radius:9px}#sel button:hover{background:#333}
+#bar{position:fixed;left:0;right:0;top:0;z-index:40;background:#fff7e0;border-bottom:1px solid #f1d98a;padding:8px 14px;display:none;align-items:center;gap:10px;justify-content:center;padding-top:calc(8px + env(safe-area-inset-top,0px))}
+.mod{position:fixed;inset:0;background:#0005;display:flex;align-items:center;justify-content:center;z-index:100;padding:16px}
+.box{background:#fff;border-radius:16px;padding:18px;width:100%;max-width:380px;max-height:85vh;overflow:auto}
+.box h3{margin-bottom:10px}.box p{color:#555;margin-bottom:10px;font-size:13px}
+.box label{display:block;font-size:12px;color:#666;margin:8px 0 3px}
+.box input{width:100%;padding:10px;border:1px solid #ddd;border-radius:9px;font:inherit}
+.row{display:block;width:100%;text-align:left;padding:11px 10px;border-radius:9px}.row:hover{background:#f3f3f5}
+.acts{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#111;color:#fff;padding:9px 16px;border-radius:99px;z-index:120;display:none}
+#rd{position:fixed;inset:0;background:#eceef2;z-index:50;display:none;flex-direction:column}
+#tb{background:#fff;border-bottom:1px solid #e5e5ea;padding:6px 8px;padding-top:calc(6px + env(safe-area-inset-top,0px));display:flex;gap:4px;align-items:center;flex-wrap:wrap}
+#tb .tl{padding:7px 10px;border-radius:9px;font-size:15px}
+#tb .tl.on{background:#111;color:#fff}
+#tb .nm{font-weight:600;max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sw{width:22px;height:22px;border-radius:99px;border:2px solid #fff;box-shadow:0 0 0 1px #ccc;flex:none}
+.sw.on{box-shadow:0 0 0 2px #111}
+#pg{flex:1;overflow:auto;padding:12px 0;-webkit-overflow-scrolling:touch}
+.pw{position:relative;margin:0 auto 12px;background:#fff;box-shadow:0 1px 6px #0002}
+.pw canvas{position:absolute;left:0;top:0}
+#rd[data-t=pen] .dc,#rd[data-t=pencil] .dc,#rd[data-t=hl] .dc,#rd[data-t=eraser] .dc{touch-action:none}
+@media(max-width:800px){
+#side{position:fixed;left:0;top:0;bottom:0;z-index:30;transform:translateX(-100%);transition:.2s;box-shadow:0 0 30px #0003}
+#side.open{transform:none}#menu{display:block}#main{padding:14px 14px 90px}
+.grid{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}}
+</style></head><body>
+<div id="bar"></div>
+<div id="app">
+<div id="side"></div>
+<div id="main"></div>
+</div>
+<div id="sel"></div><div id="toast"></div>
+<div id="rd"><div id="tb"></div><div id="pg"></div></div>
+<input type="file" id="up" accept="application/pdf" multiple hidden>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const J=(k,d)=>{try{return JSON.parse(localStorage[k])||d}catch{return d}};
+let S=J('meta',{pdfs:[],folders:[],del:[]}),D=J('dirty',{meta:0,files:[],ann:[]}),view={f:'',q:'',sel:new Set()};
+const saveS=()=>{localStorage.meta=JSON.stringify(S)},saveD=()=>{localStorage.dirty=JSON.stringify(D);bar()};
+const isDirty=()=>D.meta||D.files.length||D.ann.length;
+const gh=()=>J('gh',null);
+/* IndexedDB */
+const db=new Promise(r=>{const q=indexedDB.open('pn',1);q.onupgradeneeded=()=>['files','ann'].forEach(s=>q.result.createObjectStore(s));q.onsuccess=()=>r(q.result)});
+const tx=async(s,m,f)=>{const d=await db;return new Promise((res,rej)=>{const t=d.transaction(s,m);const r=f(t.objectStore(s));t.oncomplete=()=>res(r.result);t.onerror=()=>rej(t.error)})};
+const dget=(s,k)=>tx(s,'readonly',o=>o.get(k)),dput=(s,k,v)=>tx(s,'readwrite',o=>o.put(v,k)),ddel=(s,k)=>tx(s,'readwrite',o=>o.delete(k));
+/* ui helpers */
+function toast(t,ms=2200){const e=$('#toast');e.textContent=t;e.style.display='block';clearTimeout(toast.t);if(ms)toast.t=setTimeout(()=>e.style.display='none',ms)}
+function dlg(title,o={}){return new Promise(res=>{const m=document.createElement('div');m.className='mod';
+m.innerHTML=`<div class=box><h3>${title}</h3>${o.text?`<p>${o.text}</p>`:''}${(o.f||[]).map(x=>`<label>${x[1]}</label><input data-k="${x[0]}" value="${esc(x[2]||'')}">`).join('')}${(o.list||[]).map((x,i)=>`<button class=row data-i=${i}>${esc(x[1])}</button>`).join('')}<div class=acts><button class=b data-x=0>Cancel</button>${o.ok?`<button class="b p" data-x=1>${o.ok}</button>`:''}</div></div>`;
+document.body.append(m);const f=m.querySelector('input');f&&f.focus();const done=v=>{m.remove();res(v)};
+m.onclick=e=>{const b=e.target.closest('button');if(e.target===m||(b&&b.dataset.x==='0'))return done(null);if(!b)return;if(b.dataset.i!=null)return done(o.list[b.dataset.i][0]);const r={};m.querySelectorAll('input').forEach(i=>r[i.dataset.k]=i.value.trim());done(r)}})}
+const fmt=n=>n>1e6?(n/1e6).toFixed(1)+' MB':Math.round(n/1e3)+' KB';
+const TINT=['linear-gradient(135deg,#e6e4f7,#f3f1fc)','linear-gradient(135deg,#d9ecfb,#eef7fe)','linear-gradient(135deg,#fde6d6,#fef3ea)','linear-gradient(135deg,#d9f2e3,#eefaf2)'];
+const COV=['#6366f1','#0ea5e9','#f97316','#10b981','#ec4899','#8b5cf6'];
+/* render */
+function render(){
+const f=view.f,q=view.q.toLowerCase(),cur=S.folders.find(x=>x.id===f);
+$('#side').innerHTML=`<div class=logo>📚 PDF Notes</div><a class="nv ${!f?'on':''}" data-a=home>🏠 Home</a><div class=hd>FOLDERS</div>${S.folders.map(x=>`<a class="nv ${f===x.id?'on':''}" data-a=fold data-id=${x.id}>📁 ${esc(x.name)}</a>`).join('')||'<div class=hd>None yet</div>'}<div class=hd>APP</div><a class=nv data-a=set>⚙️ GitHub sync</a>`;
+const list=S.pdfs.filter(p=>q?p.name.toLowerCase().includes(q):(p.folder||'')===f);
+$('#main').innerHTML=`<div class=top><button id=menu data-a=menu>☰</button><input id=q placeholder="Search PDFs…" value="${esc(view.q)}"><button class=b data-a=nf>＋ Folder</button><button class="b p" data-a=upl>⬆ Upload PDF</button></div>
+<h1>${q?'Search results':cur?esc(cur.name):'My PDFs'}</h1>
+${!f&&!q?`<h2>Folders ${S.folders.length}</h2><div class=grid>${S.folders.map((x,i)=>`<div class="card fc" style="background:${TINT[i%4]}" data-a=fold data-id=${x.id}><button class=dots data-a=fm data-id=${x.id}>⋮</button><div class=t>${esc(x.name)}</div><div class=s>${S.pdfs.filter(p=>p.folder===x.id).length} items</div></div>`).join('')||'<div class=empty>No folders. Tap “＋ Folder”.</div>'}</div>`:''}
+<h2>PDFs ${list.length}</h2><div class=grid>${list.map((p,i)=>`<div class="card pc" data-a=open data-id=${p.id}><div class=chk data-a=sel data-id=${p.id}>${view.sel.has(p.id)?'✓':''}</div><button class=dots data-a=pm data-id=${p.id}>⋮</button><div class=th style="background:${COV[(p.name.length+i)%6]}">PDF</div><div class=in><div class=t>${esc(p.name)}</div><div class=s>${fmt(p.size)} · ${new Date(p.added).toLocaleDateString()}</div></div></div>`).join('')||'<div class=empty>No PDFs here. Tap “Upload PDF”.</div>'}</div>`;
+$('#main .chk.on')||0;document.querySelectorAll('.chk').forEach(c=>c.classList.toggle('on',view.sel.has(c.dataset.id)));
+const n=view.sel.size,s=$('#sel');s.style.display=n?'flex':'none';
+s.innerHTML=`<span style="padding:0 8px">${n} selected</span><button data-a=nfs>📁 New folder</button><button data-a=mv>Move</button><button data-a=dels>🗑 Delete</button><button data-a=clr>✕</button>`;
+const qi=$('#q');qi.oninput=()=>{view.q=qi.value;const p=qi.selectionStart;render();const x=$('#q');x.focus();x.setSelectionRange(p,p)}}
+function save(){saveS();D.meta=1;saveD();render()}
+/* actions */
+async function addFolder(withSel){const r=await dlg('New folder',{f:[['v','Folder name','']],ok:'Create'});if(!r||!r.v)return;const id=uid();S.folders.push({id,name:r.v});if(withSel){S.pdfs.forEach(p=>view.sel.has(p.id)&&(p.folder=id));view.sel.clear()}save()}
+async function moveSel(ids){const r=await dlg('Move to…',{list:[['','🏠 Home (no folder)'],...S.folders.map(x=>[x.id,'📁 '+x.name])]});if(r===null)return;S.pdfs.forEach(p=>ids.includes(p.id)&&(p.folder=r));view.sel.clear();save()}
+async function delPdfs(ids){const r=await dlg('Delete '+ids.length+' PDF(s)?',{text:'They will also be removed from GitHub on next upload.',ok:'Delete'});if(!r)return;for(const id of ids){S.pdfs=S.pdfs.filter(p=>p.id!==id);await ddel('files',id);await ddel('ann',id);S.del.push('pdfs/'+id+'.pdf','data/ann-'+id+'.json');D.files=D.files.filter(x=>x!==id);D.ann=D.ann.filter(x=>x!==id)}view.sel.clear();save()}
+async function pdfMenu(id){const p=S.pdfs.find(x=>x.id===id);const a=await dlg(esc(p.name),{list:[['open','📖 Open'],['ren','✏️ Rename'],['mv','📂 Move to folder'],['del','🗑 Delete']]});
+if(a==='open')openPdf(id);if(a==='mv')moveSel([id]);if(a==='del')delPdfs([id]);if(a==='ren'){const r=await dlg('Rename PDF',{f:[['v','Name',p.name]],ok:'Save'});if(r&&r.v){p.name=r.v;save()}}}
+async function foldMenu(id){const x=S.folders.find(f=>f.id===id);const a=await dlg(esc(x.name),{list:[['ren','✏️ Rename folder'],['del','🗑 Delete folder']]});
+if(a==='ren'){const r=await dlg('Rename folder',{f:[['v','Name',x.name]],ok:'Save'});if(r&&r.v){x.name=r.v;save()}}
+if(a==='del'){const k=await dlg('Delete “'+esc(x.name)+'”',{list:[['keep','Delete folder, keep PDFs'],['all','Delete folder AND its PDFs']]});if(!k)return;
+const ids=S.pdfs.filter(p=>p.folder===id).map(p=>p.id);if(k==='all')await delPdfs(ids);else S.pdfs.forEach(p=>p.folder===id&&(p.folder=''));
+S.folders=S.folders.filter(f=>f.id!==id);S.del.push('folder:'+id);if(view.f===id)view.f='';save()}}
+$('#up').onchange=async e=>{const fs=[...e.target.files];for(const file of fs){const id=uid();await dput('files',id,file);S.pdfs.push({id,name:file.name.replace(/\.pdf$/i,''),folder:view.f,size:file.size,added:Date.now()});D.files.push(id)}e.target.value='';save();toast(fs.length+' PDF added');if(navigator.onLine&&gh())sync()};
+document.addEventListener('click',async e=>{const t=e.target.closest('[data-a]');if(!t){if(!e.target.closest('#side,#menu'))$('#side').classList.remove('open');return}
+const a=t.dataset.a,id=t.dataset.id;$('#side').classList.remove('open');
+if(a==='home'){view.f='';view.q='';render()}else if(a==='fold'){view.f=id;view.q='';render()}
+else if(a==='menu')$('#side').classList.add('open');else if(a==='upl')$('#up').click();
+else if(a==='nf')addFolder(0);else if(a==='nfs')addFolder(1);else if(a==='mv')moveSel([...view.sel]);else if(a==='dels')delPdfs([...view.sel]);
+else if(a==='clr'){view.sel.clear();render()}else if(a==='sel'){view.sel.has(id)?view.sel.delete(id):view.sel.add(id);render()}
+else if(a==='open'){view.sel.size?(view.sel.has(id)?view.sel.delete(id):view.sel.add(id),render()):openPdf(id)}
+else if(a==='pm')pdfMenu(id);else if(a==='fm')foldMenu(id);else if(a==='set')settings();else if(a==='sync')sync()});
+/* GitHub sync */
+async function settings(){const c=gh()||{};const r=await dlg('GitHub sync',{text:'Create a private repo and a token (fine-grained, Contents: read & write). Data is stored in that repo.',f:[['repo','Repository (user/repo)',c.repo],['tok','Access token',c.tok]],ok:'Save'});if(!r)return;if(r.repo&&r.tok){localStorage.gh=JSON.stringify(r);toast('Saved. Syncing…');sync()}}
+async function api(path,opt={},raw){const c=gh();return fetch(`https://api.github.com/repos/${c.repo}/contents/${path}`,{...opt,headers:{Authorization:'Bearer '+c.tok,Accept:raw?'application/vnd.github.raw+json':'application/vnd.github+json'}})}
+const sha=async p=>{const r=await api(p);return r.ok?(await r.json()).sha:null};
+const b64=b=>new Promise(r=>{const f=new FileReader();f.onload=()=>r(f.result.split(',')[1]);f.readAsDataURL(b)});
+async function putF(path,blob){const s=await sha(path),c=gh();const r=await fetch(`https://api.github.com/repos/${c.repo}/contents/${path}`,{method:'PUT',headers:{Authorization:'Bearer '+c.tok,Accept:'application/vnd.github+json'},body:JSON.stringify({message:'update '+path,content:await b64(blob),sha:s||undefined})});if(!r.ok)throw new Error(path+' '+r.status)}
+async function delF(path){const s=await sha(path);if(!s)return;const c=gh();await fetch(`https://api.github.com/repos/${c.repo}/contents/${path}`,{method:'DELETE',headers:{Authorization:'Bearer '+c.tok,Accept:'application/vnd.github+json'},body:JSON.stringify({message:'delete',sha:s})})}
+async function pull(){const r=await api('data/meta.json',{},1);if(r.status===404)return;if(!r.ok)throw new Error('pull '+r.status);const R=await r.json();
+const gone=new Set([...(R.del||[]),...S.del]);S.del=[...gone];
+for(const x of R.folders)if(!S.folders.some(f=>f.id===x.id)&&!gone.has('folder:'+x.id))S.folders.push(x);
+S.folders=S.folders.filter(f=>!gone.has('folder:'+f.id));
+for(const p of R.pdfs)if(!S.pdfs.some(x=>x.id===p.id)&&!gone.has('pdfs/'+p.id+'.pdf'))S.pdfs.push(p);
+S.pdfs=S.pdfs.filter(p=>!gone.has('pdfs/'+p.id+'.pdf'));
+for(const p of S.pdfs){if(D.files.includes(p.id))continue;
+if(!(await dget('files',p.id))){toast('Downloading '+p.name+'…',0);const f=await api('pdfs/'+p.id+'.pdf',{},1);if(f.ok)await dput('files',p.id,await f.blob())}
+if(!D.ann.includes(p.id)){const a=await api('data/ann-'+p.id+'.json',{},1);if(a.ok)await dput('ann',p.id,await a.json())}}
+saveS();render()}
+let busy=0;
+async function sync(){if(busy)return;if(!gh())return settings();if(!navigator.onLine)return toast('Offline');busy=1;
+try{toast('Syncing…',0);await pull();let n=0;const tot=D.files.length+D.ann.length+S.del.length+1;
+for(const id of [...D.files]){const b=await dget('files',id);b&&await putF('pdfs/'+id+'.pdf',b);D.files=D.files.filter(x=>x!==id);toast(`Uploading ${++n}/${tot}`,0)}
+for(const id of [...D.ann]){const a=await dget('ann',id);a&&await putF('data/ann-'+id+'.json',new Blob([JSON.stringify(a)]));D.ann=D.ann.filter(x=>x!==id);toast(`Uploading ${++n}/${tot}`,0)}
+for(const p of S.del)if(!p.startsWith('folder:'))await delF(p);
+await putF('data/meta.json',new Blob([JSON.stringify(S)]));D.meta=0;saveD();toast('Saved to GitHub ✓');render()}
+catch(e){saveD();toast('Sync failed: '+e.message,4000)}busy=0}
+function bar(){const b=$('#bar'),d=isDirty(),on=navigator.onLine;
+if(!d){b.style.display='none';return}b.style.display='flex';
+b.innerHTML=on?`⚠️ Unsaved progress <button class="b p" data-a=sync>Upload to GitHub</button>`:'⚠️ Unsaved progress · offline (saved on this device)'}
+addEventListener('online',async()=>{bar();if(isDirty()&&gh()){const r=await dlg('You are back online',{text:'Upload your PDFs and notes to GitHub now?',ok:'Upload'});r&&sync()}});
+addEventListener('offline',bar);
+/* PDF.js loader (put pdf.min.js + pdf.worker.min.js in ./lib for full offline use) */
+let pj;async function lib(){if(pj)return;for(const u of ['lib/pdf.min.js','https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js']){try{await new Promise((ok,no)=>{const s=document.createElement('script');s.src=u;s.onload=ok;s.onerror=no;document.head.append(s)});if(window.pdfjsLib)break}catch{}}
+pj=window.pdfjsLib;if(!pj)throw new Error('PDF engine not loaded (need internet once, or add lib/pdf.min.js)');
+for(const u of ['lib/pdf.worker.min.js','https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js']){try{const r=await fetch(u);if(r.ok){pj.GlobalWorkerOptions.workerSrc=URL.createObjectURL(await r.blob());return}}catch{}}}
+/* reader */
+const COLS=['#111827','#dc2626','#2563eb','#16a34a','#f59e0b','#fde047','#ec4899'];
+const base={pen:2.5,pencil:1.6,hl:16},cols={pen:'#2563eb',pencil:'#374151',hl:'#fde047'};
+let tool='hand',size=1,zoom=1,undo=[],A={},cid=null,doc=null,obs=null,pt;
+const TOOLS=[['hand','✋'],['pen','🖊'],['pencil','✏️'],['hl','🖍'],['eraser','🧽']];
+function tbar(){$('#rd').dataset.t=tool;const p=S.pdfs.find(x=>x.id===cid);
+$('#tb').innerHTML=`<button class=tl data-r=back>←</button><span class=nm>${esc(p.name)}</span>${TOOLS.map(t=>`<button class="tl ${tool===t[0]?'on':''}" data-r=${t[0]}>${t[1]}</button>`).join('')}${tool in cols?COLS.map(c=>`<span class="sw ${cols[tool]===c?'on':''}" style="background:${c}" data-c=${c}></span>`).join('')+'<input type=range min=.5 max=3 step=.25 value='+size+' id=sz style="width:70px">':''}<button class=tl data-r=undo>↩</button><button class=tl data-r=zo>−</button><button class=tl data-r=zi>＋</button><span id=sv style="font-size:12px;color:#888;margin-left:auto;padding-right:6px">Saved on device ✓</span>`;
+const z=$('#sz');if(z)z.oninput=()=>size=+z.value}
+$('#tb').onclick=e=>{const c=e.target.closest('[data-c]');if(c){cols[tool]=c.dataset.c;return tbar()}const b=e.target.closest('[data-r]');if(!b)return;const r=b.dataset.r;
+if(r==='back')closePdf();else if(r==='undo'){const u=undo.pop();u&&(u(),persist())}else if(r==='zi'||r==='zo'){zoom=Math.max(.6,Math.min(3,zoom+(r==='zi'?.2:-.2)));build()}else{tool=r;tbar()}};
+async function openPdf(id){try{toast('Opening…',0);await lib();const f=await dget('files',id);if(!f){toast('File not on this device. Open GitHub sync.');return}
+cid=id;A=(await dget('ann',id))||{};undo=[];tool='hand';zoom=1;doc=await pj.getDocument({data:await f.arrayBuffer()}).promise;$('#rd').style.display='flex';tbar();build();toast('',1)}catch(e){toast(e.message,4000)}}
+function closePdf(){$('#rd').style.display='none';$('#pg').innerHTML='';doc&&doc.destroy();doc=null;obs&&obs.disconnect()}
+async function build(){const box=$('#pg');obs&&obs.disconnect();box.innerHTML='';const W=Math.min(box.clientWidth-16,900)*zoom;
+const p1=await doc.getPage(1),r=p1.getViewport({scale:1});obs=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting&&!x.target.dataset.d){x.target.dataset.d=1;paint(x.target)}}),{root:box,rootMargin:'800px'});
+for(let n=1;n<=doc.numPages;n++){const w=document.createElement('div');w.className='pw';w.dataset.n=n;w.dataset.W=W;w.style.width=W+'px';w.style.height=W*r.height/r.width+'px';box.append(w);obs.observe(w)}}
+async function paint(w){const n=+w.dataset.n,W=+w.dataset.W,pg=await doc.getPage(n),v0=pg.getViewport({scale:1}),vp=pg.getViewport({scale:W/v0.width}),dpr=Math.min(devicePixelRatio||1,2);
+w.style.height=vp.height+'px';const mk=c=>{c.width=vp.width*dpr;c.height=vp.height*dpr;c.style.width=W+'px';c.style.height=vp.height+'px';w.append(c);return c};
+const pc=mk(document.createElement('canvas')),dc=mk(document.createElement('canvas'));dc.className='dc';
+await pg.render({canvasContext:pc.getContext('2d'),viewport:pj.Util?vp:vp,transform:[dpr,0,0,dpr,0,0]}).promise;wire(dc,n);redraw(n)}
+const cv=n=>document.querySelector(`.pw[data-n="${n}"] .dc`);
+function stroke(x,s,k){x.beginPath();x.lineCap=x.lineJoin='round';x.strokeStyle=s.c;x.lineWidth=s.w*k;x.globalAlpha=s.t==='hl'?.38:s.t==='pencil'?.72:1;
+s.p.forEach((q,i)=>i?x.lineTo(q[0]*k,q[1]*k):x.moveTo(q[0]*k,q[1]*k));if(s.p.length===1)x.lineTo(s.p[0][0]*k+.1,s.p[0][1]*k);x.stroke()}
+function redraw(n){const c=cv(n);if(!c)return;const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);(A[n]||[]).forEach(s=>stroke(x,s,c.width))}
+function persist(){$('#sv')&&($('#sv').textContent='Saving…');clearTimeout(pt);pt=setTimeout(async()=>{await dput('ann',cid,A);if(!D.ann.includes(cid))D.ann.push(cid);saveD();$('#sv')&&($('#sv').textContent='Saved on device ✓')},300)}
+function wire(c,n){let cur=null,er=[];const pos=e=>{const r=c.getBoundingClientRect();return[(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.width]};
+const erase=p=>{const l=A[n]||[];const hit=l.filter(s=>s.p.some(q=>Math.hypot(q[0]-p[0],q[1]-p[1])<.02));if(hit.length){hit.forEach(s=>er.push([n,s]));A[n]=l.filter(s=>!hit.includes(s));redraw(n)}};
+c.onpointerdown=e=>{if(tool==='hand')return;e.preventDefault();c.setPointerCapture(e.pointerId);const p=pos(e);if(tool==='eraser'){cur='e';er=[];return erase(p)}
+const W=c.getBoundingClientRect().width;cur={t:tool,c:cols[tool],w:base[tool]*size/W,p:[p]};(A[n]=A[n]||[]).push(cur);redraw(n)};
+c.onpointermove=e=>{if(!cur)return;const p=pos(e);if(cur==='e')return erase(p);cur.p.push(p);redraw(n)};
+c.onpointerup=c.onpointercancel=()=>{if(!cur)return;if(cur==='e'){if(er.length){const l=er;undo.push(()=>l.forEach(([m,s])=>{(A[m]=A[m]||[]).push(s);redraw(m)}))}}else{const s=cur;undo.push(()=>{A[n]=A[n].filter(x=>x!==s);redraw(n)})}cur=null;persist()}}
+/* init */
+render();bar();
+if(navigator.onLine&&gh()&&!isDirty())pull().catch(()=>{});
+</script></body></html>
