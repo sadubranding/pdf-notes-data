@@ -167,8 +167,10 @@ const z=$('#sz');if(z)z.oninput=()=>size=+z.value}
 $('#tb').onclick=e=>{const c=e.target.closest('[data-c]');if(c){cols[tool]=c.dataset.c;return tbar()}const b=e.target.closest('[data-r]');if(!b)return;const r=b.dataset.r;
 if(r==='back')closePdf();else if(r==='last')jump();else if(r==='undo'){const u=undo.pop();u&&(u(),persist())}else if(r==='zi'||r==='zo'){zoom=Math.max(.6,Math.min(3,zoom+(r==='zi'?.2:-.2)));build()}else{tool=r;tbar()}};
 async function openPdf(id){try{toast('Opening…',0);await lib();const f=await dget('files',id);if(!f){toast('File not on this device. Open GitHub sync.');return}
+if(navigator.onLine&&gh()&&!D.ann.includes(id)){try{const r=await api('data/ann-'+id+'.json',{},1);if(r.ok)await dput('ann',id,await r.json())}catch{}}
 cid=id;A=(await dget('ann',id))||{};undo=[];tool='hand';zoom=1;doc=await pj.getDocument({data:await f.arrayBuffer()}).promise;$('#rd').style.display='flex';tbar();build();toast('',1)}catch(e){toast(e.message,4000)}}
-function closePdf(){$('#rd').style.display='none';$('#pg').innerHTML='';doc&&doc.destroy();doc=null;obs&&obs.disconnect()}
+async function closePdf(){clearTimeout(pt);if(Object.keys(A).length){await dput('ann',cid,A);if(!D.ann.includes(cid))D.ann.push(cid);saveD()}
+$('#rd').style.display='none';$('#pg').innerHTML='';doc&&doc.destroy();doc=null;obs&&obs.disconnect();if(navigator.onLine&&gh()&&isDirty())sync()}
 async function build(){const box=$('#pg');obs&&obs.disconnect();box.innerHTML='';const W=Math.min(box.clientWidth-16,900)*zoom;
 const p1=await doc.getPage(1),r=p1.getViewport({scale:1});obs=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting&&!x.target.dataset.d){x.target.dataset.d=1;paint(x.target)}}),{root:box,rootMargin:'800px'});
 for(let n=1;n<=doc.numPages;n++){const w=document.createElement('div');w.className='pw';w.dataset.n=n;w.dataset.W=W;w.style.width=W+'px';w.style.height=W*r.height/r.width+'px';box.append(w);obs.observe(w)}hts=(async()=>{try{for(const w of box.querySelectorAll('.pw')){const g=await doc.getPage(+w.dataset.n),v=g.getViewport({scale:1});w.style.height=W*v.height/v.width+'px'}}catch{}})()}
@@ -181,7 +183,7 @@ function stroke(x,s,k){x.beginPath();x.lineCap=x.lineJoin='round';x.strokeStyle=
 s.p.forEach((q,i)=>i?x.lineTo(q[0]*k,q[1]*k):x.moveTo(q[0]*k,q[1]*k));if(s.p.length===1)x.lineTo(s.p[0][0]*k+.1,s.p[0][1]*k);x.stroke()}
 function redraw(n){const c=cv(n);if(!c)return;const x=c.getContext('2d');x.clearRect(0,0,c.width,c.height);(A[n]||[]).forEach(s=>stroke(x,s,c.width))}
 function persist(){$('#sv')&&($('#sv').textContent='Saving…');clearTimeout(pt);pt=setTimeout(async()=>{await dput('ann',cid,A);if(!D.ann.includes(cid))D.ann.push(cid);saveD();$('#sv')&&($('#sv').textContent='Saved on device ✓')},300)}
-function wire(c,n){let cur=null,er=[];const pos=e=>{const r=c.getBoundingClientRect();return[(e.clientX-r.left)/r.width,(e.clientY-r.top)/r.width]};
+function wire(c,n){let cur=null,er=[];const pos=e=>{const r=c.getBoundingClientRect();return[+((e.clientX-r.left)/r.width).toFixed(4),+((e.clientY-r.top)/r.width).toFixed(4)]};
 const erase=p=>{const l=A[n]||[];const hit=l.filter(s=>s.p.some(q=>Math.hypot(q[0]-p[0],q[1]-p[1])<.02));if(hit.length){hit.forEach(s=>er.push([n,s]));A[n]=l.filter(s=>!hit.includes(s));redraw(n)}};
 c.onpointerdown=e=>{if(tool==='hand')return;e.preventDefault();c.setPointerCapture(e.pointerId);const p=pos(e);if(tool==='eraser'){cur='e';er=[];return erase(p)}
 const W=c.getBoundingClientRect().width;cur={t:tool,c:cols[tool],w:base[tool]*size/W,p:[p]};(A[n]=A[n]||[]).push(cur);redraw(n)};
