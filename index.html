@@ -50,7 +50,7 @@ h2{font-size:15px;font-weight:600;margin:20px 0 10px;color:#333}
 #tb .nm{font-weight:600;max-width:30vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .sw{width:22px;height:22px;border-radius:99px;border:2px solid #fff;box-shadow:0 0 0 1px #ccc;flex:none}
 .sw.on{box-shadow:0 0 0 2px #111}
-#pg{flex:1;overflow:auto;padding:12px 0;-webkit-overflow-scrolling:touch}
+#pg{position:relative;flex:1;overflow:auto;padding:12px 0;-webkit-overflow-scrolling:touch}
 .pw{position:relative;margin:0 auto 12px;background:#fff;box-shadow:0 1px 6px #0002}
 .pw canvas{position:absolute;left:0;top:0}
 #rd[data-t=pen] .dc,#rd[data-t=pencil] .dc,#rd[data-t=hl] .dc,#rd[data-t=eraser] .dc{touch-action:none}
@@ -159,19 +159,19 @@ for(const u of ['lib/pdf.worker.min.js','https://cdnjs.cloudflare.com/ajax/libs/
 /* reader */
 const COLS=['#111827','#dc2626','#2563eb','#16a34a','#f59e0b','#fde047','#ec4899'];
 const base={pen:2.5,pencil:1.6,hl:16},cols={pen:'#2563eb',pencil:'#374151',hl:'#fde047'};
-let tool='hand',size=1,zoom=1,undo=[],A={},cid=null,doc=null,obs=null,pt;
+let tool='hand',size=1,zoom=1,undo=[],A={},cid=null,doc=null,obs=null,pt,hts;
 const TOOLS=[['hand','✋'],['pen','🖊'],['pencil','✏️'],['hl','🖍'],['eraser','🧽']];
 function tbar(){$('#rd').dataset.t=tool;const p=S.pdfs.find(x=>x.id===cid);
-$('#tb').innerHTML=`<button class=tl data-r=back>←</button><span class=nm>${esc(p.name)}</span>${TOOLS.map(t=>`<button class="tl ${tool===t[0]?'on':''}" data-r=${t[0]}>${t[1]}</button>`).join('')}${tool in cols?COLS.map(c=>`<span class="sw ${cols[tool]===c?'on':''}" style="background:${c}" data-c=${c}></span>`).join('')+'<input type=range min=.5 max=3 step=.25 value='+size+' id=sz style="width:70px">':''}<button class=tl data-r=undo>↩</button><button class=tl data-r=zo>−</button><button class=tl data-r=zi>＋</button><span id=sv style="font-size:12px;color:#888;margin-left:auto;padding-right:6px">Saved on device ✓</span>`;
+$('#tb').innerHTML=`<button class=tl data-r=back>←</button><span class=nm>${esc(p.name)}</span>${TOOLS.map(t=>`<button class="tl ${tool===t[0]?'on':''}" data-r=${t[0]}>${t[1]}</button>`).join('')}${tool in cols?COLS.map(c=>`<span class="sw ${cols[tool]===c?'on':''}" style="background:${c}" data-c=${c}></span>`).join('')+'<input type=range min=.5 max=3 step=.25 value='+size+' id=sz style="width:70px">':''}<button class=tl data-r=last>📍 Last mark</button><button class=tl data-r=undo>↩</button><button class=tl data-r=zo>−</button><button class=tl data-r=zi>＋</button><span id=sv style="font-size:12px;color:#888;margin-left:auto;padding-right:6px">Saved on device ✓</span>`;
 const z=$('#sz');if(z)z.oninput=()=>size=+z.value}
 $('#tb').onclick=e=>{const c=e.target.closest('[data-c]');if(c){cols[tool]=c.dataset.c;return tbar()}const b=e.target.closest('[data-r]');if(!b)return;const r=b.dataset.r;
-if(r==='back')closePdf();else if(r==='undo'){const u=undo.pop();u&&(u(),persist())}else if(r==='zi'||r==='zo'){zoom=Math.max(.6,Math.min(3,zoom+(r==='zi'?.2:-.2)));build()}else{tool=r;tbar()}};
+if(r==='back')closePdf();else if(r==='last')jump();else if(r==='undo'){const u=undo.pop();u&&(u(),persist())}else if(r==='zi'||r==='zo'){zoom=Math.max(.6,Math.min(3,zoom+(r==='zi'?.2:-.2)));build()}else{tool=r;tbar()}};
 async function openPdf(id){try{toast('Opening…',0);await lib();const f=await dget('files',id);if(!f){toast('File not on this device. Open GitHub sync.');return}
 cid=id;A=(await dget('ann',id))||{};undo=[];tool='hand';zoom=1;doc=await pj.getDocument({data:await f.arrayBuffer()}).promise;$('#rd').style.display='flex';tbar();build();toast('',1)}catch(e){toast(e.message,4000)}}
 function closePdf(){$('#rd').style.display='none';$('#pg').innerHTML='';doc&&doc.destroy();doc=null;obs&&obs.disconnect()}
 async function build(){const box=$('#pg');obs&&obs.disconnect();box.innerHTML='';const W=Math.min(box.clientWidth-16,900)*zoom;
 const p1=await doc.getPage(1),r=p1.getViewport({scale:1});obs=new IntersectionObserver(es=>es.forEach(x=>{if(x.isIntersecting&&!x.target.dataset.d){x.target.dataset.d=1;paint(x.target)}}),{root:box,rootMargin:'800px'});
-for(let n=1;n<=doc.numPages;n++){const w=document.createElement('div');w.className='pw';w.dataset.n=n;w.dataset.W=W;w.style.width=W+'px';w.style.height=W*r.height/r.width+'px';box.append(w);obs.observe(w)}}
+for(let n=1;n<=doc.numPages;n++){const w=document.createElement('div');w.className='pw';w.dataset.n=n;w.dataset.W=W;w.style.width=W+'px';w.style.height=W*r.height/r.width+'px';box.append(w);obs.observe(w)}hts=(async()=>{try{for(const w of box.querySelectorAll('.pw')){const g=await doc.getPage(+w.dataset.n),v=g.getViewport({scale:1});w.style.height=W*v.height/v.width+'px'}}catch{}})()}
 async function paint(w){const n=+w.dataset.n,W=+w.dataset.W,pg=await doc.getPage(n),v0=pg.getViewport({scale:1}),vp=pg.getViewport({scale:W/v0.width}),dpr=Math.min(devicePixelRatio||1,2);
 w.style.height=vp.height+'px';const mk=c=>{c.width=vp.width*dpr;c.height=vp.height*dpr;c.style.width=W+'px';c.style.height=vp.height+'px';w.append(c);return c};
 const pc=mk(document.createElement('canvas')),dc=mk(document.createElement('canvas'));dc.className='dc';
@@ -186,7 +186,8 @@ const erase=p=>{const l=A[n]||[];const hit=l.filter(s=>s.p.some(q=>Math.hypot(q[
 c.onpointerdown=e=>{if(tool==='hand')return;e.preventDefault();c.setPointerCapture(e.pointerId);const p=pos(e);if(tool==='eraser'){cur='e';er=[];return erase(p)}
 const W=c.getBoundingClientRect().width;cur={t:tool,c:cols[tool],w:base[tool]*size/W,p:[p]};(A[n]=A[n]||[]).push(cur);redraw(n)};
 c.onpointermove=e=>{if(!cur)return;const p=pos(e);if(cur==='e')return erase(p);cur.p.push(p);redraw(n)};
-c.onpointerup=c.onpointercancel=()=>{if(!cur)return;if(cur==='e'){if(er.length){const l=er;undo.push(()=>l.forEach(([m,s])=>{(A[m]=A[m]||[]).push(s);redraw(m)}))}}else{const s=cur;undo.push(()=>{A[n]=A[n].filter(x=>x!==s);redraw(n)})}cur=null;persist()}}
+c.onpointerup=c.onpointercancel=()=>{if(!cur)return;if(cur==='e'){if(er.length){const l=er;undo.push(()=>l.forEach(([m,s])=>{(A[m]=A[m]||[]).push(s);redraw(m)}))}}else{const s=cur;A._last={n,y:s.p[s.p.length-1][1]};undo.push(()=>{A[n]=A[n].filter(x=>x!==s);redraw(n)})}cur=null;persist()}}
+async function jump(){const l=A._last;if(!l)return toast('No marks yet');await hts;const w=document.querySelector(`.pw[data-n="${l.n}"]`),b=$('#pg');if(!w)return;b.scrollTo({top:w.offsetTop+l.y*(+w.dataset.W)-b.clientHeight/3,behavior:'smooth'})}
 /* init */
 render();bar();
 if(navigator.onLine&&gh()&&!isDirty())pull().catch(()=>{});
